@@ -1,13 +1,14 @@
 mod filters;
+mod input_files;
 
-use std::path::PathBuf;
 use std::str::FromStr;
 
 use crate::filters::{FilterAction, FilterSet};
+use crate::input_files::*;
 
 fn main() {
-    let regex = regex::Regex::from_str(".*").unwrap();
-    let glob = glob::Pattern::from_str("*").unwrap();
+    let regex = regex::Regex::from_str(".*jpg$").unwrap();
+    let glob = glob::Pattern::from_str("*.flac").unwrap();
 
     let mut filter_set = FilterSet::new();
     filter_set.append_regex(regex, FilterAction::Accept);
@@ -16,18 +17,16 @@ fn main() {
     let input_dir = InputDirectory {
         priority: 100,
         filters: filter_set,
-        path: "/home/ociaw/Music/input1".into(),
+        path: "/home/ociaw/Music".into(),
     };
-    println!("Hello, world!");
+
+    match input_dir.enumerate_files() {
+        Err(err) => println!("Failed to enumerate directory: {}", err),
+        Ok(vec) => {
+            for file in vec {
+                println!("{}", file.to_string_lossy())
+            }
+        },
+    }
 }
 
-pub struct InputDirectory {
-    /// The priority of this input - higher priorities are favored in conflict resolution.
-    pub priority: u32,
-
-    /// The filters used when enumerating the files in this directory.
-    pub filters: FilterSet,
-
-    /// The absolute path to the directory.
-    pub path: PathBuf,
-}
