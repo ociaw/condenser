@@ -1,16 +1,15 @@
-mod filters;
-mod input_files;
-mod transformer;
-
-use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::str::FromStr;
 
-use crate::filters::{FilterAction, FilterSet};
-use crate::input_files::*;
-use crate::transformer::{CopyTransformer, TransformerInstance};
+use mass_file_transmuter::run_transformations;
+
+use mass_file_transmuter::filters::{FilterAction, FilterSet};
+use mass_file_transmuter::input_files::*;
+use mass_file_transmuter::transformer::{CopyTransformer, TransformerInstance};
 
 fn main() {
+    // Manual setup of everything until we can get this info from
+    // configuration file(s)
     let jpg_regex = regex::Regex::from_str(".*jpg$").unwrap();
     let flac_glob = glob::Pattern::from_str("*.flac").unwrap();
     let mp3_glob = glob::Pattern::from_str("*.mp3").unwrap();
@@ -53,36 +52,4 @@ fn main() {
     let mut transformers = vec![copy_jpg_transformer, copy_mp3_transformer];
 
     run_transformations(&mut transformers, &input_dirs, output_dir_path);
-}
-
-pub fn run_transformations<'a, DirIter, P>(transformers: &mut Vec<TransformerInstance>, input_dirs: DirIter, output_dir_path: P) 
-where DirIter : IntoIterator<Item = &'a InputDirectory>,
-    P : AsRef<Path>
-{
-    transformers.sort_by(|t1, t2| t1.priority.cmp(&t2.priority));
-    let output_dir_path = output_dir_path.as_ref();
-    let mut claimed_outputs = HashSet::new();
-
-    for input_dir in input_dirs {
-        let input_path = &input_dir.path;
-        let mut unprocessed_files = input_dir.enumerate_files().unwrap();
-
-        println!("Beginning to claim {1} files in {0}", input_path.to_string_lossy(), unprocessed_files.len());
-        for transformer in transformers.iter_mut() {
-            let count = transformer.claim_outputs(input_path, &mut unprocessed_files, &mut claimed_outputs);
-            println!("  Transformer '{}' claimed {} files - {} remaining ", &transformer.name, count, unprocessed_files.len());
-        }
-    }
-
-    std::fs::create_dir_all(output_dir_path)
-        .unwrap_or_else(|_| panic!("Failed to create output directory: {}", output_dir_path.to_string_lossy()));
-
-    println!("Running {} transformer(s)...", transformers.len());
-    for transformer in transformers {
-        let errors = transformer.process_queues(output_dir_path);
-        println!("  Transformer '{}' processing completed - {} error(s)", &transformer.name, errors.len());
-        for error in errors {
-            println!("    `{}' - {}", error.0.to_string_lossy(), error.1)
-        }
-    }
 }
