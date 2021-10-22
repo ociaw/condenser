@@ -8,7 +8,7 @@ pub enum FilterPattern {
     /// A regex filter. Automatically rejects paths that aren't valid UTF-8.
     Regex(regex::Regex),
     /// A glob filter.
-    Glob(glob::Pattern)
+    Glob(glob::Pattern),
 }
 
 impl FilterPattern {
@@ -16,8 +16,7 @@ impl FilterPattern {
     pub fn is_match<P: AsRef<Path>>(&self, path: P) -> bool {
         let path = path.as_ref();
         match self {
-            FilterPattern::Regex(regex) =>
-            path.to_str().map_or(false, |str| regex.is_match(str)),
+            FilterPattern::Regex(regex) => path.to_str().map_or(false, |str| regex.is_match(str)),
             FilterPattern::Glob(glob) => glob.matches_path(path),
         }
     }
@@ -91,7 +90,10 @@ pub struct FilterSet {
 impl FilterSet {
     /// Creates an empty filter set that rejects ignored matches by default.
     pub fn new() -> FilterSet {
-        FilterSet { filters: Vec::new(), accept_unmatched: false }
+        FilterSet {
+            filters: Vec::new(),
+            accept_unmatched: false,
+        }
     }
 
     /// Returns whether or not the file path passes all filters.
@@ -110,13 +112,19 @@ impl FilterSet {
     /// Creates and appends a filter that matches the provided regex with
     /// the given action.
     pub fn append_regex(&mut self, pattern: regex::Regex, action: FilterAction) {
-        self.filters.push(Filter { pattern: FilterPattern::Regex(pattern), action })
+        self.filters.push(Filter {
+            pattern: FilterPattern::Regex(pattern),
+            action,
+        })
     }
 
     /// Creates and appends a filter that matches the provided glob with
     /// the given action.
     pub fn append_glob(&mut self, pattern: glob::Pattern, action: FilterAction) {
-        self.filters.push(Filter { pattern: FilterPattern::Glob(pattern), action })
+        self.filters.push(Filter {
+            pattern: FilterPattern::Glob(pattern),
+            action,
+        })
     }
 }
 
@@ -139,11 +147,10 @@ impl Display for FilterSet {
 
 #[cfg(test)]
 mod tests {
-    use std::{path::PathBuf, str::FromStr};
     use regex::Regex;
+    use std::{path::PathBuf, str::FromStr};
 
     use super::*;
-
 
     #[test]
     fn basic_regex_functionality() {
@@ -207,7 +214,10 @@ mod tests {
         let mut filter_set = FilterSet::new();
         filter_set.accept_unmatched = true;
 
-        filter_set.append_regex(Regex::from_str("garlic bread").unwrap(), FilterAction::Reject);
+        filter_set.append_regex(
+            Regex::from_str("garlic bread").unwrap(),
+            FilterAction::Reject,
+        );
         filter_set.append_regex(Regex::from_str("spaghetti").unwrap(), FilterAction::Reject);
 
         assert!(filter_set.is_acceptable(path));
@@ -219,7 +229,10 @@ mod tests {
         let mut filter_set = FilterSet::new();
         filter_set.accept_unmatched = false;
 
-        filter_set.append_regex(Regex::from_str("garlic bread").unwrap(), FilterAction::Accept);
+        filter_set.append_regex(
+            Regex::from_str("garlic bread").unwrap(),
+            FilterAction::Accept,
+        );
         filter_set.append_regex(Regex::from_str("spaghetti").unwrap(), FilterAction::Accept);
 
         assert!(!filter_set.is_acceptable(path));

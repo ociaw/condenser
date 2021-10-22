@@ -21,7 +21,7 @@ fn main() {
     filter_set.append_glob(mp3_glob.clone(), FilterAction::Accept);
 
     let input_dirs = vec![
-            InputDirectory {
+        InputDirectory {
             priority: 100,
             filters: filter_set.clone(),
             path: "/home/ociaw/Music".into(),
@@ -40,15 +40,21 @@ fn main() {
             priority: 30,
             filters: filter_set.clone(),
             path: "/home/ociaw/Music-test/other".into(),
-        }
+        },
     ];
     let output_dir_path = PathBuf::from("/home/ociaw/Music (processed)");
 
-    let mut copy_jpg_transformer = TransformerInstance::new(100, "Copy JPGs".to_string(), Box::new(CopyTransformer));
-    let mut copy_mp3_transformer = TransformerInstance::new(50, "Copy MP3s".to_string(), Box::new(CopyTransformer));
-    copy_jpg_transformer.filter.append_regex(jpg_regex.clone(), FilterAction::Accept);
-    copy_mp3_transformer.filter.append_glob(mp3_glob.clone(), FilterAction::Accept);
- 
+    let mut copy_jpg_transformer =
+        TransformerInstance::new(100, "Copy JPGs".to_string(), Box::new(CopyTransformer));
+    let mut copy_mp3_transformer =
+        TransformerInstance::new(50, "Copy MP3s".to_string(), Box::new(CopyTransformer));
+    copy_jpg_transformer
+        .filter
+        .append_regex(jpg_regex.clone(), FilterAction::Accept);
+    copy_mp3_transformer
+        .filter
+        .append_glob(mp3_glob.clone(), FilterAction::Accept);
+
     let mut transformers = vec![copy_jpg_transformer, copy_mp3_transformer];
 
     run_transformations(&mut transformers, &input_dirs, output_dir_path);

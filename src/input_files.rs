@@ -1,4 +1,8 @@
-use std::{fs::read_dir, io::Error, path::{Path, PathBuf}};
+use std::{
+    fs::read_dir,
+    io::Error,
+    path::{Path, PathBuf},
+};
 
 use crate::filters::FilterSet;
 
@@ -30,10 +34,10 @@ impl InputDirectory {
             let path = entry.path();
             if path.is_dir() {
                 self.recurse_dir(&path, vec)?;
-                continue
+                continue;
             } else if !path.is_file() {
                 // Skip things that aren't files and aren't paths
-                continue
+                continue;
             }
 
             let relative = path.strip_prefix(&self.path);

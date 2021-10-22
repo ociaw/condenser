@@ -1,4 +1,8 @@
-use std::{collections::{HashMap, HashSet}, ffi::OsString, path::{Path, PathBuf}};
+use std::{
+    collections::{HashMap, HashSet},
+    ffi::OsString,
+    path::{Path, PathBuf},
+};
 
 use crate::filters::FilterSet;
 
@@ -26,7 +30,7 @@ pub trait Transformer {
 
     /// Transforms the file at input into a new file at output. The input file is not modified, but
     /// any file existing at output is overwritten.
-    fn transform(&self, input: &Path, output: &Path) -> Result<(), Box<dyn std::error::Error>> ;
+    fn transform(&self, input: &Path, output: &Path) -> Result<(), Box<dyn std::error::Error>>;
 }
 
 /// Metadata about an individual instance of a transformer.
@@ -48,7 +52,11 @@ pub struct TransformerInstance {
 
 impl TransformerInstance {
     /// Creates a new instance of a transformer, with the specified priority, name, and transformer object.
-    pub fn new(priority: u32, name: String, transformer: Box<dyn Transformer>) -> TransformerInstance {
+    pub fn new(
+        priority: u32,
+        name: String,
+        transformer: Box<dyn Transformer>,
+    ) -> TransformerInstance {
         TransformerInstance {
             priority,
             name,
@@ -60,7 +68,12 @@ impl TransformerInstance {
 
     /// Finds acceptable input files within unprocessed_files, adds them to the input
     /// queue associated with input_dir_path and adds the output ids to claimed_outputs.
-    pub fn claim_outputs(&mut self, input_dir_path: &Path, unprocessed_files: &mut Vec<PathBuf>, claimed_outputs: &mut HashSet<OutputId>) -> u64 {
+    pub fn claim_outputs(
+        &mut self,
+        input_dir_path: &Path,
+        unprocessed_files: &mut Vec<PathBuf>,
+        claimed_outputs: &mut HashSet<OutputId>,
+    ) -> u64 {
         let mut claim_count = 0;
         let transformer = &mut self.transformer;
         unprocessed_files.retain(|path| {
@@ -69,7 +82,10 @@ impl TransformerInstance {
                 return true;
             }
 
-            let input_id = InputId { dir_path: input_dir_path, file_path: path };
+            let input_id = InputId {
+                dir_path: input_dir_path,
+                file_path: path,
+            };
             if !transformer.can_handle(&input_id) {
                 // Skip this file since the transformer says it can't handle it.
                 return true;
@@ -93,7 +109,10 @@ impl TransformerInstance {
     }
 
     /// Processes all input queues, outputting to output_dir.
-    pub fn process_queues(&mut self, output_dir: &Path) -> Vec<(PathBuf, Box<dyn std::error::Error>)> {
+    pub fn process_queues(
+        &mut self,
+        output_dir: &Path,
+    ) -> Vec<(PathBuf, Box<dyn std::error::Error>)> {
         let mut failed = Vec::new();
         for (parent_dir, file_paths) in &mut self.input_queues {
             for file_path in file_paths.drain(..) {
