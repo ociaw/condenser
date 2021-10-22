@@ -16,7 +16,7 @@ pub struct InputDirectory {
 impl InputDirectory {
     /// Enumerates all the files under this input directory and returns a Vec
     /// with all relative paths that match the filters.
-    pub fn enumerate_files<'a>(&'a self) -> Result<Vec<PathBuf>, Error> {
+    pub fn enumerate_files(&self) -> Result<Vec<PathBuf>, Error> {
         let mut vec = Vec::new();
         self.recurse_dir(&self.path, &mut vec)?;
         Ok(vec)

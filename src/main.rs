@@ -75,7 +75,7 @@ where DirIter : IntoIterator<Item = &'a InputDirectory>,
     }
 
     std::fs::create_dir_all(output_dir_path)
-        .expect(&format!("Failed to create output directory: {}", output_dir_path.to_string_lossy()));
+        .unwrap_or_else(|_| panic!("Failed to create output directory: {}", output_dir_path.to_string_lossy()));
 
     println!("Running {} transformer(s)...", transformers.len());
     for transformer in transformers {

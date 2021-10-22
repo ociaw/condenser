@@ -104,7 +104,7 @@ impl FilterSet {
                 None => continue,
             };
         }
-        return self.accept_unmatched;
+        self.accept_unmatched
     }
 
     /// Creates and appends a filter that matches the provided regex with
@@ -120,11 +120,17 @@ impl FilterSet {
     }
 }
 
+impl Default for FilterSet {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Display for FilterSet {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "{} filters: \n", self.filters.len())?;
         for filter in &self.filters {
-            write!(f, "\t{}\n", filter)?
+            writeln!(f, "\t{}", filter)?
         }
 
         Ok(())

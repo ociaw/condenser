@@ -76,7 +76,7 @@ impl TransformerInstance {
             }
 
             let output_id = transformer.determine_output_id(&input_id);
-            if !claimed_outputs.insert(output_id.clone()) {
+            if !claimed_outputs.insert(output_id) {
                 // Skip this file since a previous transformer has claimed the output.
                 return true;
             }
@@ -84,7 +84,7 @@ impl TransformerInstance {
             // Now we have successully claimed this file, so add it to our queue.
             self.input_queues
                 .entry(input_dir_path.to_path_buf())
-                .or_insert_with(|| Vec::new())
+                .or_insert_with(Vec::new)
                 .push(path.to_path_buf());
             claim_count += 1;
             false
@@ -129,9 +129,9 @@ impl Transformer for CopyTransformer {
     fn transform(&self, input: &Path, output: &Path) -> Result<(), Box<dyn std::error::Error>> {
         // Create the parent directory if it doesn't exist
         if let Some(output_parent) = output.parent() {
-            std::fs::create_dir_all(output_parent).map_err(|err| Box::new(err))?;
+            std::fs::create_dir_all(output_parent).map_err(Box::new)?;
         }
-        std::fs::copy(input, output).map_err(|err| Box::new(err))?;
+        std::fs::copy(input, output).map_err(Box::new)?;
         Ok(())
     }
 }
