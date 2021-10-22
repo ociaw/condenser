@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 use std::str::FromStr;
 
-use mass_file_transmuter::run_transformations;
+use condenser::run_transformations;
 
-use mass_file_transmuter::filters::{FilterAction, FilterSet};
-use mass_file_transmuter::input_files::*;
-use mass_file_transmuter::transformer::{CopyTransformer, TransformerInstance};
+use condenser::filters::{FilterAction, FilterSet};
+use condenser::input_files::*;
+use condenser::transformer::{CopyTransformer, TransformerInstance};
 
 fn main() {
     // Manual setup of everything until we can get this info from

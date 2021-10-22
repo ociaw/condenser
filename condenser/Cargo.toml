@@ -1,9 +1,8 @@
 [package]
-name = "condenser-bin"
+name = "condenser"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-condenser = { path = "condenser" }
 regex = "1.5.4"
 glob = "0.3.0"
