@@ -1,12 +1,13 @@
-pub mod filters;
-pub mod input_files;
-pub mod transformer;
+mod filters;
+mod input_files;
+mod transformer;
 
 use std::collections::HashSet;
 use std::path::Path;
 
-use crate::input_files::*;
-use crate::transformer::TransformerInstance;
+pub use crate::filters::*;
+pub use crate::input_files::*;
+pub use crate::transformer::*;
 
 // TODO: Create an object to hold this data.
 

@@ -3,9 +3,7 @@ use std::str::FromStr;
 
 use condenser::run_transformations;
 
-use condenser::filters::{FilterAction, FilterSet};
-use condenser::input_files::*;
-use condenser::transformer::{CopyTransformer, TransformerInstance};
+use condenser::{CopyTransformer, FilterAction, FilterSet, InputDirectory, TransformerInstance};
 
 fn main() {
     // Manual setup of everything until we can get this info from
