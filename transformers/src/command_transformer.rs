@@ -76,6 +76,14 @@ pub struct FullCommand {
 }
 
 impl FullCommand {
+    /// Creates a new instance of FullCommand with the provided program and no arguments.
+    pub fn new(program: OsString) -> FullCommand {
+        FullCommand {
+            program,
+            args: Vec::new(),
+        }
+    }
+
     /// Executes the program with the specifed arguments, substituting input and output
     /// for any arguments equal to InputPath or OutputPath.
     pub fn execute(&self, input: &Path, output: &Path) -> Result<i32, Box<dyn std::error::Error>> {
@@ -116,11 +124,14 @@ impl Transformer for CommandTransformer {
     }
 
     fn determine_output_id(&self, input: &InputId) -> OutputId {
-        OutputId(input.file_path.with_extension("").into_os_string())
+        OutputId(input.file_path().with_extension("").into_os_string())
     }
 
     fn determine_output_path(&self, input: &InputId) -> PathBuf {
-        input.file_path.to_path_buf()
+        match &self.output_file_extension {
+            Some(ext) => input.file_path().with_extension(ext),
+            None => input.file_path().to_path_buf(),
+        }
     }
 
     fn transform(&self, input: &Path, output: &Path) -> Result<(), Box<dyn std::error::Error>> {

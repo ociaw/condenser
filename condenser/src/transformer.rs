@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     ffi::OsString,
+    panic,
     path::{Path, PathBuf},
 };
 
@@ -9,8 +10,42 @@ use crate::filters::FilterSet;
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 /// An ID uniquely identifying an input.
 pub struct InputId<'a, 'b> {
-    pub dir_path: &'a Path,
-    pub file_path: &'b Path,
+    dir_path: &'a Path,
+    file_path: &'b Path,
+}
+
+impl<'a, 'b> InputId<'a, 'b> {
+    /// Creates a new InputId. dir_path must be absolute, and file_path
+    /// must be relative.
+    pub fn new(dir_path: &'a Path, file_path: &'b Path) -> InputId<'a, 'b> {
+        if dir_path.is_relative() {
+            panic!(
+                "dir_path may not be relative: {}",
+                dir_path.to_string_lossy()
+            )
+        }
+        if file_path.is_absolute() {
+            panic!(
+                "file_path may not be absolute: {}",
+                file_path.to_string_lossy()
+            )
+        }
+
+        InputId {
+            dir_path,
+            file_path,
+        }
+    }
+
+    /// Returns the directory path.
+    pub fn dir_path(&self) -> &'a Path {
+        &self.dir_path
+    }
+
+    /// Returns the file path.
+    pub fn file_path(&self) -> &'b Path {
+        &self.file_path
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -116,10 +151,17 @@ impl TransformerInstance {
         let mut failed = Vec::new();
         for (parent_dir, file_paths) in &mut self.input_queues {
             for file_path in file_paths.drain(..) {
-                let mut input_path = parent_dir.to_path_buf();
-                input_path.push(&file_path);
-                let mut output_path = output_dir.to_path_buf();
-                output_path.push(&file_path);
+                let input_path: PathBuf = [parent_dir, &file_path].iter().collect();
+                // TODO: Use a temporary file
+                // TODO: Add handling of existing files
+                let output_path: PathBuf = [
+                    output_dir,
+                    &self
+                        .transformer
+                        .determine_output_path(&InputId::new(&parent_dir, &file_path)),
+                ]
+                .iter()
+                .collect();
                 if let Err(err) = self.transformer.transform(&input_path, &output_path) {
                     failed.push((input_path, err));
                 }

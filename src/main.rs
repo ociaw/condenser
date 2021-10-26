@@ -20,6 +20,12 @@ fn main() {
 
     let input_dirs = vec![
         InputDirectory {
+            priority: 40,
+            filters: filter_set.clone(),
+            path: "/home/ociaw/Music-test/digital-media".into(),
+        },
+        /*
+        InputDirectory {
             priority: 100,
             filters: filter_set.clone(),
             path: "/home/ociaw/Music".into(),
@@ -39,6 +45,7 @@ fn main() {
             filters: filter_set.clone(),
             path: "/home/ociaw/Music-test/other".into(),
         },
+        */
     ];
     let output_dir_path = PathBuf::from("/home/ociaw/Music (processed)");
 
@@ -46,6 +53,42 @@ fn main() {
         TransformerInstance::new(100, "Copy JPGs".to_string(), Box::new(CopyTransformer));
     let mut copy_mp3_transformer =
         TransformerInstance::new(50, "Copy MP3s".to_string(), Box::new(CopyTransformer));
+
+    let compress_flac_transformer = {
+        use transformers::{CommandArgument, CommandTransformer, FullCommand};
+        let ffmpeg_program = "/usr/bin/ffmpeg".into();
+        let mut command = FullCommand::new(ffmpeg_program);
+
+        command.args = vec![
+            CommandArgument::Arg("-i".into()),
+            CommandArgument::InputPath,
+            // Ignore existing files
+            CommandArgument::Arg("-n".into()),
+            // Ignore video
+            CommandArgument::Arg("-vn".into()),
+            // Audio codec is opus
+            CommandArgument::Arg("-c:a".into()),
+            CommandArgument::Arg("libopus".into()),
+            // Bitrate is 96 kbps
+            CommandArgument::Arg("-b:a".into()),
+            CommandArgument::Arg("96K".into()),
+            CommandArgument::OutputPath,
+        ];
+
+        let transformer = CommandTransformer {
+            transform_command: command,
+            output_file_extension: Some("ogg".into()),
+            check_command: None,
+        };
+
+        let mut instance =
+            TransformerInstance::new(75, "Compress FLACs".to_string(), Box::new(transformer));
+        instance
+            .filter
+            .append_glob(flac_glob.clone(), FilterAction::Accept);
+        instance
+    };
+
     copy_jpg_transformer
         .filter
         .append_regex(jpg_regex.clone(), FilterAction::Accept);
@@ -53,7 +96,11 @@ fn main() {
         .filter
         .append_glob(mp3_glob.clone(), FilterAction::Accept);
 
-    let mut transformers = vec![copy_jpg_transformer, copy_mp3_transformer];
+    let mut transformers = vec![
+        copy_jpg_transformer,
+        copy_mp3_transformer,
+        compress_flac_transformer,
+    ];
 
     run_transformations(&mut transformers, &input_dirs, output_dir_path);
 }
