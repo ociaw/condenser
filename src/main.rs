@@ -20,12 +20,6 @@ fn main() {
 
     let input_dirs = vec![
         InputDirectory {
-            priority: 40,
-            filters: filter_set.clone(),
-            path: "/home/ociaw/Music-test/digital-media".into(),
-        },
-        /*
-        InputDirectory {
             priority: 100,
             filters: filter_set.clone(),
             path: "/home/ociaw/Music".into(),
@@ -45,7 +39,6 @@ fn main() {
             filters: filter_set.clone(),
             path: "/home/ociaw/Music-test/other".into(),
         },
-        */
     ];
     let output_dir_path = PathBuf::from("/home/ociaw/Music (processed)");
 
@@ -92,7 +85,7 @@ fn main() {
         let mut instance = TransformerInstance::new(
             75,
             condenser::OverwriteBehavior::IfNewer,
-            "Compress FLACs".to_string(),
+            "Compress to opus".to_string(),
             Box::new(transformer),
         );
         instance
