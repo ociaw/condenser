@@ -7,6 +7,20 @@ use std::{
 
 use crate::filters::FilterSet;
 
+/// Indicates how the transformer should behave when the output file
+/// already exists.
+pub enum OverwriteBehavior {
+    /// Existing files will always be overwritten.
+    Always,
+
+    /// Existing files will never be overwritten.
+    Never,
+
+    /// Existing files will be overwritten iff the input file is newer
+    /// than the existing file.
+    IfNewer,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 /// An ID uniquely identifying an input.
 pub struct InputId<'a, 'b> {
@@ -73,6 +87,10 @@ pub struct TransformerInstance {
     /// The priority - transformers with higher priorities are run first.
     pub priority: u32,
 
+    /// How the transformer behaves when the output file already exists.
+    pub overwrite_behavior: OverwriteBehavior,
+
+    /// The display name.
     pub name: String,
 
     /// The filter that files should pass before being transformed.
@@ -89,11 +107,13 @@ impl TransformerInstance {
     /// Creates a new instance of a transformer, with the specified priority, name, and transformer object.
     pub fn new(
         priority: u32,
+        overwrite_behavior: OverwriteBehavior,
         name: String,
         transformer: Box<dyn Transformer>,
     ) -> TransformerInstance {
         TransformerInstance {
             priority,
+            overwrite_behavior,
             name,
             transformer,
             filter: FilterSet::new(),
@@ -149,7 +169,14 @@ impl TransformerInstance {
         output_dir: &Path,
     ) -> Vec<(PathBuf, Box<dyn std::error::Error>)> {
         let mut failed = Vec::new();
-        for (parent_dir, file_paths) in &mut self.input_queues {
+
+        // We swap these around to avoid borrowing issues when iterating through
+        // the queues. We could also do more fine grained borrows in the loop,
+        // but this is simpler.
+        let mut input_queues = HashMap::new();
+        core::mem::swap(&mut input_queues, &mut self.input_queues);
+
+        for (parent_dir, file_paths) in &mut input_queues {
             for file_path in file_paths.drain(..) {
                 let input_path: PathBuf = [parent_dir, &file_path].iter().collect();
                 // TODO: Use a temporary file
@@ -162,12 +189,47 @@ impl TransformerInstance {
                 ]
                 .iter()
                 .collect();
-                if let Err(err) = self.transformer.transform(&input_path, &output_path) {
+
+                if let Err(err) = self.transform(&input_path, &output_path) {
                     failed.push((input_path, err));
                 }
             }
         }
         failed
+    }
+
+    /// Runs a transforms the file at input_path to output_path,
+    /// using the specified overrwrite behavior
+    fn transform(
+        &self,
+        input_path: &Path,
+        output_path: &Path,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        assert!(input_path.is_absolute());
+        assert!(output_path.is_absolute());
+        match &self.overwrite_behavior {
+            OverwriteBehavior::Always => (),
+            OverwriteBehavior::Never => {
+                if Path::exists(&output_path) {
+                    return Ok(());
+                }
+            }
+            OverwriteBehavior::IfNewer => {
+                if Path::exists(&output_path) {
+                    let output_meta = std::fs::metadata(&output_path)?;
+                    let input_meta = std::fs::metadata(&input_path)?;
+
+                    // TODO: We might want to handle this error differently, since
+                    // it indicates a platform limitation, not a potentially transient
+                    // IO error
+                    if input_meta.modified()? <= output_meta.modified()? {
+                        return Ok(());
+                    }
+                }
+            }
+        }
+
+        self.transformer.transform(&input_path, &output_path)
     }
 }
 

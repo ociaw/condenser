@@ -49,10 +49,18 @@ fn main() {
     ];
     let output_dir_path = PathBuf::from("/home/ociaw/Music (processed)");
 
-    let mut copy_jpg_transformer =
-        TransformerInstance::new(100, "Copy JPGs".to_string(), Box::new(CopyTransformer));
-    let mut copy_mp3_transformer =
-        TransformerInstance::new(50, "Copy MP3s".to_string(), Box::new(CopyTransformer));
+    let mut copy_jpg_transformer = TransformerInstance::new(
+        100,
+        condenser::OverwriteBehavior::IfNewer,
+        "Copy JPGs".to_string(),
+        Box::new(CopyTransformer),
+    );
+    let mut copy_mp3_transformer = TransformerInstance::new(
+        50,
+        condenser::OverwriteBehavior::IfNewer,
+        "Copy MP3s".to_string(),
+        Box::new(CopyTransformer),
+    );
 
     let compress_flac_transformer = {
         use transformers::{CommandArgument, CommandTransformer, FullCommand};
@@ -62,8 +70,8 @@ fn main() {
         command.args = vec![
             CommandArgument::Arg("-i".into()),
             CommandArgument::InputPath,
-            // Ignore existing files
-            CommandArgument::Arg("-n".into()),
+            // Always overwrite existing files - this is handled at a higher level
+            CommandArgument::Arg("-y".into()),
             // Ignore video
             CommandArgument::Arg("-vn".into()),
             // Audio codec is opus
@@ -81,8 +89,12 @@ fn main() {
             check_command: None,
         };
 
-        let mut instance =
-            TransformerInstance::new(75, "Compress FLACs".to_string(), Box::new(transformer));
+        let mut instance = TransformerInstance::new(
+            75,
+            condenser::OverwriteBehavior::IfNewer,
+            "Compress FLACs".to_string(),
+            Box::new(transformer),
+        );
         instance
             .filter
             .append_glob(flac_glob.clone(), FilterAction::Accept);
