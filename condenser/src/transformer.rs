@@ -128,6 +128,7 @@ impl TransformerInstance {
         input_dir_path: &Path,
         unprocessed_files: &mut Vec<PathBuf>,
         claimed_outputs: &mut HashSet<OutputId>,
+        output_paths: &mut HashSet<PathBuf>,
     ) -> u64 {
         let mut claim_count = 0;
         let transformer = &mut self.transformer;
@@ -151,6 +152,9 @@ impl TransformerInstance {
                 // Skip this file since a previous transformer has claimed the output.
                 return true;
             }
+
+            // Log this as an output path.
+            output_paths.insert(transformer.determine_output_path(&input_id));
 
             // Now we have successully claimed this file, so add it to our queue.
             self.input_queues

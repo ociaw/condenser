@@ -48,12 +48,6 @@ fn main() {
         "Copy JPGs".to_string(),
         Box::new(CopyTransformer),
     );
-    let mut copy_mp3_transformer = TransformerInstance::new(
-        50,
-        condenser::OverwriteBehavior::IfNewer,
-        "Copy MP3s".to_string(),
-        Box::new(CopyTransformer),
-    );
 
     let compress_flac_transformer = {
         use transformers::{CommandArgument, CommandTransformer, FullCommand};
@@ -92,18 +86,17 @@ fn main() {
             .filter
             .append_glob(flac_glob.clone(), FilterAction::Accept);
         instance
+            .filter
+            .append_glob(mp3_glob.clone(), FilterAction::Accept);
+        instance
     };
 
     copy_jpg_transformer
         .filter
         .append_regex(jpg_regex.clone(), FilterAction::Accept);
-    copy_mp3_transformer
-        .filter
-        .append_glob(mp3_glob.clone(), FilterAction::Accept);
 
     let mut transformers = vec![
         copy_jpg_transformer,
-        copy_mp3_transformer,
         compress_flac_transformer,
     ];
 
