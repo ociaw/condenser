@@ -89,17 +89,20 @@ impl FullCommand {
     pub fn execute(&self, input: &Path, output: &Path) -> Result<i32, Box<dyn std::error::Error>> {
         use std::process::Command;
 
-        let status = Command::new(&self.program)
+        // TODO: Support environment variables
+        let output = Command::new(&self.program)
             .args(self.args.iter().map(|arg| match arg {
                 CommandArgument::Arg(arg) => arg,
                 CommandArgument::InputPath => input.as_os_str(),
                 CommandArgument::OutputPath => output.as_os_str(),
             }))
-            .status()?;
+            .output()?;
 
+        // TODO: Log STDOUT
+        // TODO: Optionally error if STDERR is non-empty?
         // TODO: Check return status and maybe output?
         // TODO: More robust status handling.
-        let code = status.code().unwrap_or_default();
+        let code = output.status.code().unwrap_or_default();
         Ok(code)
     }
 }
