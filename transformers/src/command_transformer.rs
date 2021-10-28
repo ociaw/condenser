@@ -6,6 +6,7 @@ use std::{
 };
 
 use condenser::{InputId, OutputId, Transformer};
+use log::{trace, warn};
 
 /// An argument to pass to the command transformer.
 pub enum CommandArgument {
@@ -89,16 +90,35 @@ impl FullCommand {
     pub fn execute(&self, input: &Path, output: &Path) -> Result<i32, Box<dyn std::error::Error>> {
         use std::process::Command;
 
-        // TODO: Support environment variables
-        let output = Command::new(&self.program)
-            .args(self.args.iter().map(|arg| match arg {
-                CommandArgument::Arg(arg) => arg,
-                CommandArgument::InputPath => input.as_os_str(),
-                CommandArgument::OutputPath => output.as_os_str(),
-            }))
-            .output()?;
+        let args = self.args.iter().map(|arg| match arg {
+            CommandArgument::Arg(arg) => arg,
+            CommandArgument::InputPath => input.as_os_str(),
+            CommandArgument::OutputPath => output.as_os_str(),
+        });
 
-        // TODO: Log STDOUT
+        trace!(
+            "Executing command {} with args {}",
+            &self.program.to_string_lossy(),
+            args.clone().map(|arg| arg.to_string_lossy()).collect::<Vec<_>>().join(" ")
+        );
+
+        // TODO: Support environment variables
+        let output = Command::new(&self.program).args(args).output()?;
+
+        if output.status.success() {
+            trace!("Command {} succeeded - stderr:\n{}\nstdout:\n{}",
+                &self.program.to_string_lossy(),
+                String::from_utf8_lossy(&output.stderr),
+                String::from_utf8_lossy(&output.stdout)
+            )
+        } else {
+            warn!("Command {} failed - stderr:\n{}\nstdout:\n{}",
+                &self.program.to_string_lossy(),
+                String::from_utf8_lossy(&output.stderr),
+                String::from_utf8_lossy(&output.stdout)
+            )
+        }
+
         // TODO: Optionally error if STDERR is non-empty?
         // TODO: Check return status and maybe output?
         // TODO: More robust status handling.

@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 condenser = { path = "../condenser" }
+log = "0.4"

@@ -6,6 +6,8 @@ use condenser::run_transformations;
 use condenser::{CopyTransformer, FilterAction, FilterSet, InputDirectory, TransformerInstance};
 
 fn main() {
+    env_logger::Builder::new().filter_level(log::LevelFilter::max()).init();
+
     // Manual setup of everything until we can get this info from
     // configuration file(s)
     let jpg_regex = regex::Regex::from_str(".*jpg$").unwrap();
@@ -57,6 +59,11 @@ fn main() {
         command.args = vec![
             CommandArgument::Arg("-i".into()),
             CommandArgument::InputPath,
+            // Quiet down
+            CommandArgument::Arg("-hide_banner".into()),
+            CommandArgument::Arg("-nostats".into()),
+            CommandArgument::Arg("-loglevel".into()),
+            CommandArgument::Arg("error".into()),
             // Always overwrite existing files - this is handled at a higher level
             CommandArgument::Arg("-y".into()),
             // Ignore video

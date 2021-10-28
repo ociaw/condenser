@@ -7,6 +7,11 @@ use std::fs::read_dir;
 use std::path::Path;
 use std::path::PathBuf;
 
+use log::debug;
+use log::error;
+use log::info;
+use log::warn;
+
 pub use crate::filters::*;
 pub use crate::input_files::*;
 pub use crate::transformer::*;
@@ -35,49 +40,61 @@ pub fn run_transformations<'a, DirIter, P>(
         let input_path = &input_dir.path;
         let mut unprocessed_files = input_dir.enumerate_files().unwrap();
 
-        println!(
+        info!(
             "Beginning to claim {1} files in {0}",
             input_path.to_string_lossy(),
             unprocessed_files.len()
         );
+
         for transformer in transformers.iter_mut() {
             let count =
                 transformer.claim_outputs(input_path, &mut unprocessed_files, &mut claimed_outputs, &mut output_paths);
-            println!(
+            info!(
                 "  Transformer '{}' claimed {} files - {} remaining ",
                 &transformer.name,
                 count,
                 unprocessed_files.len()
             );
         }
+
+        info!(
+            "{0} files unclaimed by transformers",
+            unprocessed_files.len()
+        );
     }
 
     // Ensure the output directory exists
     std::fs::create_dir_all(output_dir_path).unwrap_or_else(|_| {
-        panic!(
+        error!(
             "Failed to create output directory: {}",
             output_dir_path.to_string_lossy()
-        )
+        );
+        return;
     });
 
-    println!("Deleting orphaned files...");
+    info!("Deleting orphaned files...");
     // Delete any orphans from the output directory
     if let Err(err) = delete_orphans(output_dir_path, output_dir_path, &output_paths) {
-        println!("Failed to delete orphaned files: '{}'. Transformations will continue.", err)
+        warn!("Failed to delete orphaned files: '{}'. Transformations will continue.", err)
     }
 
     // Run the tranformers - this can potentially be done in parallel for each transformer,
     // since they should be independent from each other.
-    println!("Running {} transformer(s)...", transformers.len());
+    info!("Running {} transformer(s)...", transformers.len());
     for transformer in transformers {
         let errors = transformer.process_queues(output_dir_path);
-        println!(
-            "  Transformer '{}' processing completed - {} error(s)",
+        info!(
+            "Transformer '{}' processing completed - {} error(s)",
             &transformer.name,
             errors.len()
         );
         for error in errors {
-            println!("    `{}' - {}", error.0.to_string_lossy(), error.1)
+            warn!(
+                "Transformer {} encountered an error transforming '{}' - {}",
+                &transformer.name,
+                error.0.to_string_lossy(),
+                error.1
+            )
         }
     }
 }
@@ -98,7 +115,7 @@ fn delete_orphans(root_dir: &Path, current_dir: &Path, allowed_files: &HashSet<P
         if let Ok(relative_path) = path.strip_prefix(root_dir) {
             // Skip any files not matching the root prefix
             if !allowed_files.contains(relative_path) {
-                println!("Deleting {}", relative_path.to_string_lossy());
+                debug!("Deleting {}", relative_path.to_string_lossy());
                 std::fs::remove_file(path)?;
             }
         }
