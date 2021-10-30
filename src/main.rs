@@ -1,5 +1,9 @@
+mod config;
 use std::path::PathBuf;
+use std::process::exit;
 use std::str::FromStr;
+
+use config::*;
 
 use condenser::run_transformations;
 
@@ -8,6 +12,12 @@ use condenser::{CopyTransformer, FilterAction, FilterSet, InputDirectory, Transf
 fn main() {
     env_logger::Builder::new().filter_level(log::LevelFilter::max()).init();
 
+    //let config = std::fs::read_to_string("./config.toml");
+    let config: config::Val = toml::from_str("val = { Struct = { value = -123 } }").unwrap();
+    
+    //println!("{}", toml::to_string(&Config { output_dir: config::Path::String("arst".to_string())}).unwrap());
+
+    exit(0);
     // Manual setup of everything until we can get this info from
     // configuration file(s)
     let jpg_regex = regex::Regex::from_str(".*jpg$").unwrap();
