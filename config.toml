@@ -1,0 +1,70 @@
+output_dir = "/home/ociaw/Music (processed)"
+
+[[input_dirs]]
+priority = 100
+path = "/home/ociaw/Music"
+filters = [ { Glob = "*.flac" }, { Glob = "*.mp3" }, { Regex = ".*jpg$" } ]
+
+[[input_dirs]]
+priority = 50
+path = "/home/ociaw/Music-test/cd-rips"
+filters = [ { Glob = "*.flac" }, { Glob = "*.mp3" }, { Regex = ".*jpg$" } ]
+
+[[input_dirs]]
+priority = 40
+path = "/home/ociaw/Music-test/digital-media"
+filters = [ { Glob = "*.flac" }, { Glob = "*.mp3" }, { Regex = ".*jpg$" } ]
+
+[[input_dirs]]
+priority = 30
+path = "/home/ociaw/Music-test/other"
+filters = [ { Glob = "*.flac" }, { Glob = "*.mp3" }, { Regex = ".*jpg$" } ]
+
+[[transformers]]
+name = "Copy Images"
+priority = 100
+overwrite = { IfNewer = {} }
+filters = [
+    { Glob = "*.jpg" },
+    # An abomination
+    { Glob = "*.jpeg" },
+    # Regex isn't needed, but useful for testing
+    { Regex = ".*\\.png$" },
+]
+transformer = { CopyTransformer = {} }
+
+[[transformers]]
+# Assume that ogg files are already opus
+name = "Copy ogg"
+priority = 90
+overwrite = { IfNewer = {} }
+filters = [ { Glob = "*.ogg" } ]
+transformer = { CopyTransformer = {} }
+
+[[transformers]]
+name = "Compress to opus"
+priority = 80
+overwrite = { IfNewer = {} }
+filters = [ { Glob = "*.mp3" }, { Glob = "*.flac" } ]
+# TOML isn't great at deeply nested configs...
+transformer = { CommandTransformer = { output_file_ext = "ogg", transform_command = { program = "/usr/bin/ffmpeg", args = [
+    "-i",
+    "!INPUTPATH!",
+    # Quiet down
+    "-hide_banner",
+    "-nostats",
+    "-loglevel",
+    "error",
+    # Always overwrite existing files - this is handled at a higher level
+    "-y",
+    # Ignore video
+    "-vn",
+    # Audio codec is opus
+    "-c:a",
+    "libopus",
+    # Target bitrate is 96 kbps
+    "-b:a",
+    "96K",
+    "!OUTPUTPATH!"
+] } } }
+
