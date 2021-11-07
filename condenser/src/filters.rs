@@ -60,6 +60,14 @@ pub struct Filter {
 }
 
 impl Filter {
+    /// Creates a new filter with the provided action.
+    pub fn new(pattern: FilterPattern, action: FilterAction) -> Filter {
+        Filter {
+            pattern,
+            action,
+        }
+    }
+
     /// Tests a file path against this filter, returning the specified
     /// if it maches, or None otherwise.
     pub fn test<P: AsRef<Path>>(&self, path: P) -> Option<FilterAction> {
@@ -107,6 +115,11 @@ impl FilterSet {
             };
         }
         self.accept_unmatched
+    }
+
+    /// Creates and appends a filter with the given action.
+    pub fn append(&mut self, pattern: FilterPattern, action: FilterAction) {
+        self.filters.push(Filter { pattern, action })
     }
 
     /// Creates and appends a filter that matches the provided regex with
