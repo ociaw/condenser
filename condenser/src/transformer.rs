@@ -1,14 +1,10 @@
-use std::{
-    collections::{HashMap, HashSet},
-    ffi::OsString,
-    panic,
-    path::{Path, PathBuf},
-};
+use std::{collections::{HashMap, HashSet}, ffi::OsString, fmt::Debug, panic, path::{Path, PathBuf}};
 
 use crate::filters::FilterSet;
 
 /// Indicates how the transformer should behave when the output file
 /// already exists.
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum OverwriteBehavior {
     /// Existing files will always be overwritten.
     Always,
@@ -67,7 +63,7 @@ impl<'a, 'b> InputId<'a, 'b> {
 pub struct OutputId(pub OsString);
 
 /// Transforms one file to another
-pub trait Transformer {
+pub trait Transformer : Debug {
     /// Tests whether or not this transformer can handle the given input file.
     fn can_handle(&self, input: &InputId) -> bool;
 
@@ -238,6 +234,7 @@ impl TransformerInstance {
 }
 
 /// A simple transformer that copies the entire file located at input to output.
+#[derive(Debug)]
 pub struct CopyTransformer;
 
 impl Transformer for CopyTransformer {

@@ -9,6 +9,7 @@ use condenser::{InputId, OutputId, Transformer};
 use log::{trace, warn};
 
 /// An argument to pass to the command transformer.
+#[derive(Debug)]
 pub enum CommandArgument {
     /// An arbitary string to be an argument.
     Arg(OsString),
@@ -68,6 +69,7 @@ impl std::error::Error for CommandError {
 }
 
 /// A full command with an executable path and arguments.
+#[derive(Debug)]
 pub struct FullCommand {
     /// The path to an executable.
     pub program: OsString,
@@ -128,6 +130,7 @@ impl FullCommand {
 }
 
 /// A transformer that executes an external command.
+#[derive(Debug)]
 pub struct CommandTransformer {
     /// The command to execute the transformation.
     pub transform_command: FullCommand,
