@@ -14,17 +14,20 @@ letting you compress it, say from `FLAC` to `opus`.
 File Discovery
 --------------
 
-Each input folder is scanned independently of others and matched against a glob.
+Each input directory is scanned independently of others and matched against a glob.
 Files not matching the glob are ignored.
-Each input folder is represented by an object that contains the *relative* paths of all files.
-Each file path is relative to the input folder.
-Each file path is unique within the input folder.
-File paths are not necessarily unique between input folders.
+Each input directory is represented by an object that contains the *relative* paths of all files.
+Each file path is relative to the input directory.
+Each file path is unique within the input directory.
+File paths are not necessarily unique between input directories.
 
 Transfomers
 ----------
 
 Output transfomers are arranged by priority - higher priority transfomers win file path conflicts.
+Currently only two transformer types exist - Copy and Command. The `Copy` transfomer simply
+performs a filesystem-level copy from the input path to the output path, while the `Command`
+transformer executes an arbitrary external command.
 
 Output Path Mapping
 -------------------
@@ -34,7 +37,7 @@ is scanned and filtered. Then each transformer runs in order of priority, claimi
 matching files that have not yet been claimed. Whenever a tranformer finds a matching file, it
 claims the file - i.e., this input file cannot be claimed by other transformers. Additionally,
 the transformer claims the output file id - so no other file can be output that results in the
-same file. This process repeats for each input folder, in order of the input directory priority.
+same file. This process repeats for each input directory, in order of the input directory priority.
 
 Orphan Deletion
 ---------------
